@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Movements — AM-Craft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ================================================
+       AM-CRAFT STOCK MOVEMENTS — DESIGN SYSTEM
+       ================================================ */
+    *{margin:0;padding:0;box-sizing:border-box}
+
+    :root {
+      --navy: #0E1165;
+      --navy-light: #1a1d8a;
+      --navy-dark: #090d4a;
+      --sky: #0ea5e9;
+      --sky-light: #e0f2fe;
+      --sky-hover: #0284c7;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --surface-hover: #f8fafc;
+      --text: #0f172a;
+      --text-dim: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-focus: #0ea5e9;
+      --success: #10b981;
+      --success-bg: #d1fae5;
+      --success-border: #6ee7b7;
+      --success-text: #065f46;
+      --error: #ef4444;
+      --error-bg: #fee2e2;
+      --error-border: #fca5a5;
+      --error-text: #991b1b;
+      --warn-bg: #fef3c7;
+      --warn-text: #92400e;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow-sm: 0 1px 3px rgba(14,17,101,.06);
+      --shadow-md: 0 4px 16px rgba(14,17,101,.08);
+      --shadow-lg: 0 12px 40px rgba(14,17,101,.12);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--surface-alt);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ---- Top bar ---- */
+    .topbar {
+      background: var(--navy);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(14,17,101,.25);
+    }
+    .topbar-logo {
+      width: 36px; height: 36px;
+      background: white;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: var(--navy);
+      letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+    .topbar h1 {
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .topbar-sub {
+      color: rgba(255,255,255,.5);
+      font-size: 13px;
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ---- Container ---- */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ---- Form ---- */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      transition: border var(--transition), box-shadow var(--transition);
+      color: var(--text);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(14,165,233,.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    /* ---- Grid ---- */
+    .grid { display: grid; gap: 16px; margin-bottom: 20px; }
+    .grid-2 { grid-template-columns: repeat(2,1fr); }
+    .grid-3 { grid-template-columns: repeat(3,1fr); }
+    @media(max-width:640px){ .grid-2,.grid-3{grid-template-columns:1fr} }
+
+    /* ---- Tabs ---- */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 4px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px 18px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition);
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .tab:hover { color: var(--text); background: var(--surface-alt); }
+    .tab.active {
+      background: var(--navy);
+      color: white;
+      box-shadow: 0 2px 8px rgba(14,17,101,.2);
+    }
+
+    /* ---- Sections ---- */
+    .section { display: none; }
+    .section.active { display: block; animation: fadeUp .3s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---- Items ---- */
+    .items-container { margin-bottom: 16px; }
+    .item {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .item-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+    @media(max-width:640px){ .item-header{grid-template-columns:1fr} }
+    .item-info {
+      padding: 12px;
+      background: white;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+    .item-info.loading { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
+    .item-info.error   { background: var(--error-bg); color: var(--error-text); border-color: transparent; }
+    .item-name { font-weight: 600; margin-bottom: 6px; color: var(--navy); }
+    .stock-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; background: var(--surface-alt);
+      border: 1px solid var(--border); border-radius: 4px;
+      font-size: 12px; font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .badge-loc { color: var(--text); }
+    .badge-qty { color: var(--success); font-weight: 700; }
+
+    /* ---- Buttons ---- */
+    .btn {
+      width: 100%;
+      padding: 13px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--navy);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--navy-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(14,17,101,.25);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 2px dashed var(--border);
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+    .btn-secondary:hover { border-color: var(--navy); color: var(--navy); background: rgba(14,17,101,.03); }
+    .btn-remove {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1.5px solid var(--error);
+      color: var(--error);
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .btn-remove:hover { background: var(--error); color: white; }
+
+    /* ---- Toast notification ---- */
+    .toast-container {
+      position: fixed;
+      top: 76px;
+      right: 20px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 420px;
+      width: calc(100% - 40px);
+    }
+    .toast {
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn .4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .toast.leaving { animation: toastOut .3s ease forwards; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateX(40px); }
+    }
+    .toast-success {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+    .toast-error {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-border);
+    }
+    .toast-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast-detail {
+      font-size: 13px;
+      opacity: .85;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .toast-detail div { margin-bottom: 2px; }
+    .toast-close {
+      position: absolute;
+      top: 10px; right: 12px;
+      background: none; border: none;
+      font-size: 18px; cursor: pointer;
+      color: inherit; opacity: .5;
+      font-family: inherit;
+    }
+    .toast-close:hover { opacity: 1; }
+    .toast-bar {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: currentColor;
+      opacity: .3;
+      animation: shrinkBar 8s linear forwards;
+    }
+    @keyframes shrinkBar { to { width: 0; } }
+
+    /* ---- Stock check ---- */
+    .stock-check { display: flex; gap: 12px; margin-bottom: 20px; }
+    .stock-check input { flex: 1; }
+    .stock-check button {
+      padding: 11px 24px;
+      background: var(--navy);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+    .stock-check button:hover { background: var(--navy-light); }
+    .stock-results {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stock-results h3 { font-size: 17px; margin-bottom: 6px; color: var(--navy); }
+    .stock-results p { color: var(--text-dim); font-size: 13px; margin-bottom: 14px; font-family: 'JetBrains Mono', monospace; }
+    .stock-results table { width: 100%; border-collapse: collapse; }
+    .stock-results th,
+    .stock-results td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .stock-results th {
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.5px; background: var(--surface-alt);
+    }
+    .stock-results td:last-child { text-align: right; font-weight: 700; color: var(--success); font-family: 'JetBrains Mono', monospace; }
+    .stock-results tr:last-child td { border: none; background: var(--success-bg); font-weight: 700; }
+
+    /* ---- History ---- */
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th,
+    .history-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .history-table th {
+      font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .5px; font-size: 11px; background: var(--surface-alt);
+    }
+    .history-table tr:hover { background: var(--surface-hover); }
+    .history-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+
+    /* ---- Modal ---- */
+    .modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(14,17,101,.4);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+      z-index: 2000; padding: 20px;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      background: white;
+      border-radius: var(--radius);
+      padding: 28px;
+      max-width: 480px; width: 100%;
+      max-height: 80vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-header { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 20px; }
+    .modal-body { margin-bottom: 20px; }
+    .confirm-item { padding: 10px 14px; background: var(--surface-alt); border-radius: var(--radius-sm); margin-bottom: 10px; }
+    .confirm-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+    .confirm-value { font-size: 14px; font-weight: 600; color: var(--text); }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn-cancel {
+      background: transparent; border: 2px solid var(--border); color: var(--text-dim);
+      font-family: inherit;
+    }
+    .btn-cancel:hover { border-color: var(--error); color: var(--error); }
+    .btn-confirm { background: var(--success); color: white; }
+    .btn-confirm:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,.3); }
+
+    /* ---- Loading ---- */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(14,17,101,.35);
+      backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .loading-overlay.show { display: flex; }
+    .loading-content { background: white; padding: 32px; border-radius: var(--radius); text-align: center; box-shadow: var(--shadow-lg); }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- Init overlay ---- */
+    .init-overlay {
+      position: fixed; inset: 0;
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 5000;
+      transition: opacity .5s, visibility .5s;
+    }
+    .init-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .init-loader { text-align: center; color: white; }
+    .init-loader .spinner { border-color: rgba(255,255,255,.2); border-top-color: white; }
+    .init-loader p { font-size: 14px; opacity: .7; margin-top: 4px; }
+
+    /* ---- Monospace helpers ---- */
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+
+<!-- Init loader -->
+<div class="init-overlay" id="initOverlay">
+  <div class="init-loader">
+    <div class="spinner"></div>
+    <p>Loading Stock Movements…</p>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-logo">AM</div>
+  <h1>Stock Movements</h1>
+  <span class="topbar-sub" id="topbarDate"></span>
+</div>
+
+<div class="container">
+
+  <!-- Operator -->
+  <div class="card">
+    <div class="form-group" style="margin:0">
+      <label>Operator</label>
+      <select id="operatorSelect" onchange="onOperatorChange()">
+        <option value="">Loading operators…</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('move',this)">Move Stock</button>
+    <button class="tab" onclick="switchTab('writeoff',this)">Write-off</button>
+    <button class="tab" onclick="switchTab('check',this)">Check Stock</button>
+    <button class="tab" onclick="switchTab('history',this)">History</button>
+  </div>
+
+  <!-- MOVE STOCK -->
+  <div id="section-move" class="section active">
+    <div class="card">
+      <div class="grid grid-3">
+        <div class="form-group">
+          <label>From Location</label>
+          <select id="move-from" onchange="onFromChange('move')"><option value="">Loading…</option></select>
+        </div>
+        <div class="form-group">
+          <label>To Location</label>
+          <select id="move-to"><option value="">Loading…</option></select>
+        </div>
+        <div class="form-group">
+          <label>Work Order</label>
+          <input type="text" id="move-wo" placeholder="AM000.10.25" />
+        </div>
+      </div>
+      <div class="items-container" id="move-items"></div>
+      <button class="btn btn-secondary" onclick="addItem('move')">+ Add Batch</button>
+      <button class="btn btn-primary" onclick="confirmMove()">Create Movement</button>
+    </div>
+  </div>
+
+  <!-- WRITE-OFF -->
+  <div id="section-writeoff" class="section">
+    <div class="card">
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label>From Location</label>
+          <select id="writeoff-from"><option value="">Loading…</option></select>
+        </div>
+        <div class="form-group">
+          <label>Work Order</label>
+          <input type="text" id="writeoff-wo" placeholder="AM000.10.25" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Reason</label>
+        <textarea id="writeoff-reason" placeholder="Enter reason for write-off…"></textarea>
+      </div>
+      <div class="items-container" id="writeoff-items"></div>
+      <button class="btn btn-secondary" onclick="addItem('writeoff')">+ Add Batch</button>
+      <button class="btn btn-primary" onclick="confirmWriteoff()">Move to USED_UP</button>
+    </div>
+  </div>
+
+  <!-- CHECK STOCK -->
+  <div id="section-check" class="section">
+    <div class="card">
+      <div class="stock-check">
+        <input type="text" id="check-bn" placeholder="Enter batch number" onkeydown="if(event.key==='Enter')checkStock()" />
+        <button onclick="checkStock()">Check</button>
+      </div>
+      <div id="stock-results" class="stock-results" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="section-history" class="section">
+    <div class="card">
+      <div id="history-container">
+        <div class="history-empty">Select an operator to view history</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal" id="confirmModal">
+  <div class="modal-content">
+    <div class="modal-header" id="confirmTitle">Confirm Movement</div>
+    <div class="modal-body" id="confirmBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-confirm" id="confirmButton">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <p>Processing…</p>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// CONFIG — paste your deployed Apps Script URL here
+// =====================================================
+var API_URL = 'https://script.google.com/macros/s/AKfycbw_v6wmCx2oiqfTKQDoRW_S42SqTnDg_DvZz2b5_2_vmtpTkofFrkl3X7T00Uzn9get/exec';
+
+// =====================================================
+// STATE
+// =====================================================
+var itemCounter = 0;
+var locations = [];
+var employees = [];
+var jsonpCounter = 0;
+
+// =====================================================
+// JSONP ENGINE
+// =====================================================
+function jsonp(params) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_jsonp_cb_' + (++jsonpCounter) + '_' + Date.now();
+    var timeout = setTimeout(function() {
+      delete window[cbName];
+      reject(new Error('Request timed out'));
+    }, 60000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      resolve(data);
+    };
+
+    params.callback = cbName;
+    var qs = Object.keys(params).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+
+    var script = document.createElement('script');
+    script.src = API_URL + '?' + qs;
+    script.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('Network error'));
+    };
+    document.body.appendChild(script);
+    script.onload = function() { script.remove(); };
+  });
+}
+
+// =====================================================
+// INIT
+// =====================================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Set date
+  var d = new Date();
+  document.getElementById('topbarDate').textContent =
+    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // Load data
+  Promise.all([
+    jsonp({ action: 'getEmployees' }),
+    jsonp({ action: 'getLocations' })
+  ]).then(function(res) {
+    employees = res[0] || [];
+    locations = res[1] || [];
+    populateEmployees();
+    populateLocations();
+    addItem('move');
+    addItem('writeoff');
+    document.getElementById('initOverlay').classList.add('hidden');
+  }).catch(function(err) {
+    document.querySelector('.init-loader p').textContent = 'Failed to connect: ' + err.message;
+  });
+});
+
+function populateEmployees() {
+  var sel = document.getElementById('operatorSelect');
+  sel.innerHTML = '<option value="">— Select operator —</option>';
+  employees.forEach(function(e) {
+    var o = document.createElement('option');
+    o.value = e.code;
+    o.textContent = e.name + '  (' + e.code + ')';
+    sel.appendChild(o);
+  });
+}
+
+function populateLocations() {
+  ['move-from','move-to','writeoff-from'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— Select —</option>';
+    locations.forEach(function(loc) {
+      var o = document.createElement('option');
+      o.value = loc.code;
+      o.textContent = loc.code + ' — ' + loc.name;
+      sel.appendChild(o);
+    });
+  });
+}
+
+// =====================================================
+// TAB SWITCHING
+// =====================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('section-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory();
+}
+
+function onOperatorChange() {
+  // auto-load history if on history tab
+  if (document.getElementById('section-history').classList.contains('active')) {
+    loadHistory();
+  }
+}
+
+// =====================================================
+// TOAST NOTIFICATIONS
+// =====================================================
+function showToast(type, title, detailHtml, duration) {
+  if (!duration) duration = 8000;
+  var container = document.getElementById('toastContainer');
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+
+  var icon = type === 'success' ? '✓' : '✗';
+  toast.innerHTML =
+    '<button class="toast-close" onclick="dismissToast(this.parentElement)">×</button>' +
+    '<div class="toast-title">' + icon + '  ' + title + '</div>' +
+    (detailHtml ? '<div class="toast-detail">' + detailHtml + '</div>' : '') +
+    '<div class="toast-bar" style="width:100%"></div>';
+
+  container.appendChild(toast);
+
+  setTimeout(function() { dismissToast(toast); }, duration);
+}
+
+function dismissToast(el) {
+  if (!el || el.classList.contains('leaving')) return;
+  el.classList.add('leaving');
+  setTimeout(function() { el.remove(); }, 300);
+}
+
+// =====================================================
+// ITEMS
+// =====================================================
+function addItem(section) {
+  itemCounter++;
+  var id = itemCounter;
+  var container = document.getElementById(section + '-items');
+  var html =
+    '<div class="item" id="item-' + id + '">' +
+      '<div class="item-header">' +
+        '<div class="form-group" style="margin:0">' +
+          '<label>Batch Number</label>' +
+          '<input type="text" id="bn-' + id + '" placeholder="2500025" onchange="loadBatchInfo(' + id + ')" />' +
+        '</div>' +
+        '<div class="form-group" style="margin:0">' +
+          '<label>Quantity</label>' +
+          '<input type="number" id="qty-' + id + '" placeholder="300" step="0.01" />' +
+        '</div>' +
+        '<button class="btn-remove" onclick="removeItem(' + id + ')">×</button>' +
+      '</div>' +
+      '<div class="item-info loading" id="info-' + id + '">Enter batch number to load details</div>' +
+    '</div>';
+  container.insertAdjacentHTML('beforeend', html);
+
+  // Auto-fill qty if move from H1
+  if (section === 'move' && document.getElementById('move-from').value === 'H1') {
+    document.getElementById('qty-' + id).value = 1510;
+  }
+}
+
+function removeItem(id) {
+  var el = document.getElementById('item-' + id);
+  if (el) el.remove();
+}
+
+function onFromChange(section) {
+  if (section === 'move' && document.getElementById('move-from').value === 'H1') {
+    var container = document.getElementById('move-items');
+    container.querySelectorAll('[id^="qty-"]').forEach(function(inp) {
+      if (!inp.value || inp.value === '0') inp.value = 1510;
+    });
+  }
+}
+
+function loadBatchInfo(id) {
+  var bn = document.getElementById('bn-' + id).value.trim();
+  var infoDiv = document.getElementById('info-' + id);
+
+  if (!bn) {
+    infoDiv.className = 'item-info loading';
+    infoDiv.innerHTML = 'Enter batch number to load details';
+    return;
+  }
+
+  infoDiv.className = 'item-info loading';
+  infoDiv.innerHTML = 'Loading…';
+
+  jsonp({ action: 'getBatchInfo', batchnr: bn }).then(function(result) {
+    if (result.success) {
+      var batch = result.data;
+      infoDiv.dataset.itemcode = batch.itemcode;
+
+      // Load stock per location
+      jsonp({ action: 'getBatchStock', itemcode: batch.itemcode, batchnr: bn }).then(function(stock) {
+        var badges = '';
+        for (var loc in stock) {
+          badges += '<span class="badge"><span class="badge-loc">' + loc + '</span> <span class="badge-qty">' + stock[loc] + '</span></span>';
+        }
+        if (!badges) badges = '<span class="badge">No stock</span>';
+        infoDiv.className = 'item-info';
+        infoDiv.innerHTML = '<div class="item-name">' + batch.itemname + '</div><div class="stock-badges">' + badges + '</div>';
+      }).catch(function() {
+        infoDiv.className = 'item-info';
+        infoDiv.innerHTML = '<div class="item-name">' + batch.itemname + '</div><div class="stock-badges"><span class="badge">Stock load failed</span></div>';
+      });
+    } else {
+      infoDiv.className = 'item-info error';
+      infoDiv.innerHTML = result.error;
+    }
+  }).catch(function(err) {
+    infoDiv.className = 'item-info error';
+    infoDiv.innerHTML = 'Error: ' + err.message;
+  });
+}
+
+function getItems(section) {
+  var container = document.getElementById(section + '-items');
+  var items = [];
+  container.querySelectorAll('.item').forEach(function(item) {
+    var id = item.id.split('-')[1];
+    var bn = (document.getElementById('bn-' + id) || {}).value;
+    if (bn) bn = bn.trim();
+    var qty = parseFloat((document.getElementById('qty-' + id) || {}).value) || 0;
+    var info = document.getElementById('info-' + id);
+    var itemcode = info ? info.dataset.itemcode : '';
+    var nameEl = info ? info.querySelector('.item-name') : null;
+    var itemname = nameEl ? nameEl.textContent : itemcode;
+
+    if (bn && qty > 0 && itemcode) {
+      items.push({ batchnr: bn, quant: qty, itemcode: itemcode, itemname: itemname });
+    }
+  });
+  return items;
+}
+
+// =====================================================
+// CONFIRM & SAVE — MOVE
+// =====================================================
+function confirmMove() {
+  var op = document.getElementById('operatorSelect');
+  var operatorCode = op.value;
+  var operatorName = op.selectedOptions[0] ? op.selectedOptions[0].text : '';
+  var fromLoc = document.getElementById('move-from').value;
+  var toLoc = document.getElementById('move-to').value;
+  var wo = document.getElementById('move-wo').value.trim().toUpperCase();
+  var items = getItems('move');
+
+  if (!operatorCode) return showToast('error', 'Select an operator');
+  if (!fromLoc || !toLoc) return showToast('error', 'Select FROM and TO locations');
+  if (fromLoc === toLoc) return showToast('error', 'FROM and TO cannot be the same');
+  if (items.length === 0) return showToast('error', 'Add at least one item with batch info loaded');
+
+  showConfirmModal('Confirm Stock Movement', operatorName, fromLoc, toLoc, wo, '', items, function() {
+    closeModal();
+    showLoading(true);
+
+    var sendItems = items.map(function(i) { return { batchnr: i.batchnr, quant: i.quant, itemcode: i.itemcode }; });
+
+    jsonp({
+      action: 'createMove',
+      operatorCode: operatorCode,
+      fromLocation: fromLoc,
+      toLocation: toLoc,
+      workOrder: wo,
+      items: JSON.stringify(sendItems)
+    }).then(function(result) {
+      showLoading(false);
+      if (result.success) {
+        // Detailed toast
+        var detail = '<div><strong>' + fromLoc + '</strong> → <strong>' + toLoc + '</strong></div>';
+        if (wo) detail += '<div>WO: ' + wo + '</div>';
+        items.forEach(function(it) {
+          detail += '<div>' + it.itemname + ' — Batch ' + it.batchnr + ' × ' + it.quant + '</div>';
+        });
+        detail += '<div style="margin-top:4px;opacity:.7">Nr: ' + (result.sernr || '?') + '</div>';
+        showToast('success', 'Movement Created', detail, 12000);
+        clearForm('move');
+        loadHistory();
+      } else {
+        showToast('error', 'Movement Failed', result.error);
+      }
+    }).catch(function(err) {
+      showLoading(false);
+      showToast('error', 'Error', err.message);
+    });
+  });
+}
+
+// =====================================================
+// CONFIRM & SAVE — WRITEOFF
+// =====================================================
+function confirmWriteoff() {
+  var op = document.getElementById('operatorSelect');
+  var operatorCode = op.value;
+  var operatorName = op.selectedOptions[0] ? op.selectedOptions[0].text : '';
+  var fromLoc = document.getElementById('writeoff-from').value;
+  var wo = document.getElementById('writeoff-wo').value.trim().toUpperCase();
+  var reason = document.getElementById('writeoff-reason').value.trim();
+  var items = getItems('writeoff');
+
+  if (!operatorCode) return showToast('error', 'Select an operator');
+  if (!fromLoc) return showToast('error', 'Select FROM location');
+  if (items.length === 0) return showToast('error', 'Add at least one item with batch info loaded');
+
+  showConfirmModal('Confirm Write-off', operatorName, fromLoc, 'USED_UP', wo, reason, items, function() {
+    closeModal();
+    showLoading(true);
+
+    var sendItems = items.map(function(i) { return { batchnr: i.batchnr, quant: i.quant, itemcode: i.itemcode }; });
+
+    jsonp({
+      action: 'createWriteoff',
+      operatorCode: operatorCode,
+      fromLocation: fromLoc,
+      workOrder: wo,
+      reason: reason,
+      items: JSON.stringify(sendItems)
+    }).then(function(result) {
+      showLoading(false);
+      if (result.success) {
+        var detail = '<div><strong>' + fromLoc + '</strong> → <strong>USED_UP</strong></div>';
+        if (wo) detail += '<div>WO: ' + wo + '</div>';
+        if (reason) detail += '<div>Reason: ' + reason + '</div>';
+        items.forEach(function(it) {
+          detail += '<div>' + it.itemname + ' — Batch ' + it.batchnr + ' × ' + it.quant + '</div>';
+        });
+        detail += '<div style="margin-top:4px;opacity:.7">Nr: ' + (result.sernr || '?') + '</div>';
+        showToast('success', 'Write-off Created', detail, 12000);
+        clearForm('writeoff');
+        loadHistory();
+      } else {
+        showToast('error', 'Write-off Failed', result.error);
+      }
+    }).catch(function(err) {
+      showLoading(false);
+      showToast('error', 'Error', err.message);
+    });
+  });
+}
+
+// =====================================================
+// MODAL
+// =====================================================
+function showConfirmModal(title, operatorName, from, to, wo, reason, items, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+
+  var html = '';
+  html += '<div class="confirm-item"><div class="confirm-label">Operator</div><div class="confirm-value">' + operatorName + '</div></div>';
+  html += '<div class="confirm-item"><div class="confirm-label">From</div><div class="confirm-value">' + from + '</div></div>';
+  html += '<div class="confirm-item"><div class="confirm-label">To</div><div class="confirm-value">' + to + '</div></div>';
+  if (wo) html += '<div class="confirm-item"><div class="confirm-label">Work Order</div><div class="confirm-value">' + wo + '</div></div>';
+  if (reason) html += '<div class="confirm-item"><div class="confirm-label">Reason</div><div class="confirm-value">' + reason + '</div></div>';
+  html += '<div class="confirm-item"><div class="confirm-label">Items (' + items.length + ')</div>';
+  items.forEach(function(it) {
+    html += '<div class="confirm-value" style="font-size:13px;margin-bottom:4px">' + it.itemname + ' — <span class="mono">' + it.batchnr + '</span> × ' + it.quant + '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('confirmBody').innerHTML = html;
+  document.getElementById('confirmButton').onclick = onConfirm;
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+// =====================================================
+// CHECK STOCK
+// =====================================================
+function checkStock() {
+  var bn = document.getElementById('check-bn').value.trim();
+  var div = document.getElementById('stock-results');
+  if (!bn) return showToast('error', 'Enter a batch number');
+
+  div.style.display = 'block';
+  div.innerHTML = '<div class="item-info loading">Searching…</div>';
+
+  jsonp({ action: 'getBatchInfo', batchnr: bn }).then(function(result) {
+    if (result.success) {
+      var batch = result.data;
+      jsonp({ action: 'getBatchStock', itemcode: batch.itemcode, batchnr: bn }).then(function(stock) {
+        var rows = '', total = 0;
+        for (var loc in stock) {
+          rows += '<tr><td>' + loc + '</td><td>' + stock[loc] + '</td></tr>';
+          total += stock[loc];
+        }
+        if (!rows) rows = '<tr><td colspan="2">No stock found</td></tr>';
+        div.innerHTML =
+          '<h3>' + batch.itemname + '</h3>' +
+          '<p>Item: ' + batch.itemcode + ' &nbsp;|&nbsp; Batch: ' + bn + '</p>' +
+          '<table><tr><th>Location</th><th>Quantity</th></tr>' + rows +
+          '<tr><td>TOTAL</td><td>' + total + '</td></tr></table>';
+      }).catch(function() {
+        div.innerHTML = '<h3>' + batch.itemname + '</h3><p>Failed to load stock</p>';
+      });
+    } else {
+      div.innerHTML = '<div class="item-info error">' + result.error + '</div>';
+    }
+  }).catch(function(err) {
+    div.innerHTML = '<div class="item-info error">Error: ' + err.message + '</div>';
+  });
+}
+
+// =====================================================
+// HISTORY
+// =====================================================
+function loadHistory() {
+  var operatorCode = document.getElementById('operatorSelect').value;
+  var container = document.getElementById('history-container');
+
+  if (!operatorCode) {
+    container.innerHTML = '<div class="history-empty">Select an operator to view history</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="item-info loading">Loading history…</div>';
+
+  jsonp({ action: 'getHistory', operatorCode: operatorCode, limit: '12' }).then(function(movements) {
+    if (!movements || movements.length === 0) {
+      container.innerHTML = '<div class="history-empty">No movements found</div>';
+      return;
+    }
+
+    var html = '<div style="overflow-x:auto"><table class="history-table"><thead><tr>' +
+      '<th>Date</th><th>Nr</th><th>From</th><th>To</th><th>WO</th><th>Batches</th>' +
+      '</tr></thead><tbody>';
+
+    movements.forEach(function(m) {
+      html += '<tr>';
+      html += '<td class="mono">' + (m.transdate || '-') + '</td>';
+      html += '<td class="mono">' + (m.sernr || '-') + '</td>';
+      html += '<td>' + (m.frlocation || '-') + '</td>';
+      html += '<td>' + (m.tolocation || '-') + '</td>';
+      html += '<td class="mono">' + (m.reference || '-') + '</td>';
+      html += '<td style="max-width:280px;word-wrap:break-word">';
+
+      if (m.items && m.items.length > 0) {
+        var show = m.items.slice(0, 5);
+        show.forEach(function(item, idx) {
+          if (idx > 0) html += ', ';
+          html += '<span class="mono" style="font-size:12px;white-space:nowrap">' +
+            item.batchnr + ' <span style="color:var(--text-muted)">(' + item.quant + ')</span></span>';
+        });
+        if (m.items.length > 5) {
+          html += '<br><span style="color:var(--text-muted);font-size:11px">+ ' + (m.items.length - 5) + ' more</span>';
+        }
+      } else {
+        html += '-';
+      }
+      html += '</td></tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }).catch(function(err) {
+    container.innerHTML = '<div class="item-info error">Failed to load history: ' + err.message + '</div>';
+  });
+}
+
+// =====================================================
+// HELPERS
+// =====================================================
+function clearForm(section) {
+  document.getElementById(section + '-items').innerHTML = '';
+  addItem(section);
+  if (section === 'move') {
+    document.getElementById('move-to').value = '';
+    document.getElementById('move-wo').value = '';
+  } else {
+    document.getElementById('writeoff-wo').value = '';
+    document.getElementById('writeoff-reason').value = '';
+  }
+}
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+</script>
+</body>
+</html>

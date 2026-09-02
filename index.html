@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="https://amcraft-it.github.io/auth/auth.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://amcraft-it.github.io/auth/auth.js"></script>
   <title>Stock Movements — AM-Craft</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -582,7 +582,7 @@
 
 <script>
 // =====================================================
-// CONFIG — paste your deployed Apps Script URL here
+// CONFIG — deployed Apps Script URL (Moneo stock backend)
 // =====================================================
 var API_URL = 'https://script.google.com/macros/s/AKfycbw_v6wmCx2oiqfTKQDoRW_S42SqTnDg_DvZz2b5_2_vmtpTkofFrkl3X7T00Uzn9get/exec';
 
@@ -595,24 +595,43 @@ var employees = [];
 var jsonpCounter = 0;
 
 // =====================================================
-// JSONP ENGINE
+// JSONP ENGINE (hardened: attaches auth token, 25s timeout,
+// one automatic retry for READS only — writes are never retried
+// so a timed-out movement can't be duplicated).
 // =====================================================
-function jsonp(params) {
+function jsonp(params, _retried) {
   return new Promise(function(resolve, reject) {
     // Attach the auth day-token (from auth.js) so the backend authorizes writes.
     if (window.amcraftAuth && window.amcraftAuth.getDayToken) {
       var _dt = window.amcraftAuth.getDayToken();
       if (_dt) params.auth_token = _dt;
     }
-    var cbName = '_jsonp_cb_' + (++jsonpCounter) + '_' + Date.now();
-    var timeout = setTimeout(function() {
-      delete window[cbName];
-      reject(new Error('Request timed out'));
-    }, 60000);
 
-    window[cbName] = function(data) {
+    // State-changing actions must never auto-retry (avoids duplicate movements).
+    var canRetry = !_retried &&
+                   params.action !== 'createMove' &&
+                   params.action !== 'createWriteoff';
+
+    var cbName = '_jsonp_cb_' + (++jsonpCounter) + '_' + Date.now();
+    var script = document.createElement('script');
+    var done = false;
+
+    function cleanup() {
+      if (done) return;
+      done = true;
       clearTimeout(timeout);
       delete window[cbName];
+      try { script.remove(); } catch (e) {}
+    }
+
+    var timeout = setTimeout(function() {
+      cleanup();
+      if (canRetry) { jsonp(params, true).then(resolve, reject); }
+      else { reject(new Error('Request timed out')); }
+    }, 25000);
+
+    window[cbName] = function(data) {
+      cleanup();
       resolve(data);
     };
 
@@ -621,15 +640,13 @@ function jsonp(params) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
     }).join('&');
 
-    var script = document.createElement('script');
     script.src = API_URL + '?' + qs;
     script.onerror = function() {
-      clearTimeout(timeout);
-      delete window[cbName];
-      reject(new Error('Network error'));
+      cleanup();
+      if (canRetry) { setTimeout(function() { jsonp(params, true).then(resolve, reject); }, 800); }
+      else { reject(new Error('Network error')); }
     };
     document.body.appendChild(script);
-    script.onload = function() { script.remove(); };
   });
 }
 
@@ -845,7 +862,7 @@ function confirmMove() {
   var wo = document.getElementById('move-wo').value.trim().toUpperCase();
   var items = getItems('move');
 
-   if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
+  if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
     return showToast('error', 'Finishing sign-in — please try again in a few seconds');
   if (!operatorCode) return showToast('error', 'Select an operator');
   if (!fromLoc || !toLoc) return showToast('error', 'Select FROM and TO locations');
@@ -900,7 +917,7 @@ function confirmWriteoff() {
   var reason = document.getElementById('writeoff-reason').value.trim();
   var items = getItems('writeoff');
 
-    if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
+  if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
     return showToast('error', 'Finishing sign-in — please try again in a few seconds');
   if (!operatorCode) return showToast('error', 'Select an operator');
   if (!fromLoc) return showToast('error', 'Select FROM location');

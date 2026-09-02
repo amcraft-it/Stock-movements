@@ -599,6 +599,11 @@ var jsonpCounter = 0;
 // =====================================================
 function jsonp(params) {
   return new Promise(function(resolve, reject) {
+    // Attach the auth day-token (from auth.js) so the backend authorizes writes.
+    if (window.amcraftAuth && window.amcraftAuth.getDayToken) {
+      var _dt = window.amcraftAuth.getDayToken();
+      if (_dt) params.auth_token = _dt;
+    }
     var cbName = '_jsonp_cb_' + (++jsonpCounter) + '_' + Date.now();
     var timeout = setTimeout(function() {
       delete window[cbName];
@@ -840,6 +845,8 @@ function confirmMove() {
   var wo = document.getElementById('move-wo').value.trim().toUpperCase();
   var items = getItems('move');
 
+   if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
+    return showToast('error', 'Finishing sign-in — please try again in a few seconds');
   if (!operatorCode) return showToast('error', 'Select an operator');
   if (!fromLoc || !toLoc) return showToast('error', 'Select FROM and TO locations');
   if (fromLoc === toLoc) return showToast('error', 'FROM and TO cannot be the same');
@@ -893,6 +900,8 @@ function confirmWriteoff() {
   var reason = document.getElementById('writeoff-reason').value.trim();
   var items = getItems('writeoff');
 
+    if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
+    return showToast('error', 'Finishing sign-in — please try again in a few seconds');
   if (!operatorCode) return showToast('error', 'Select an operator');
   if (!fromLoc) return showToast('error', 'Select FROM location');
   if (items.length === 0) return showToast('error', 'Add at least one item with batch info loaded');

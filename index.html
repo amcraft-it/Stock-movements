@@ -493,6 +493,7 @@
     <div class="form-group" style="margin:0">
       <label>Operator</label>
       <div id="operatorDisplay" class="operator-display">Loading operator…</div>
+      <div id="authDebug" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748b;white-space:pre-wrap;line-height:1.5;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;max-height:160px;overflow:auto"></div>
     </div>
   </div>
 
@@ -689,6 +690,15 @@ document.addEventListener('DOMContentLoaded', function() {
 // =====================================================
 var currentOperator = null;
 var stockToken = null;
+
+function dbg(msg) {
+  try {
+    var el = document.getElementById('authDebug');
+    if (!el) return;
+    var t = new Date().toLocaleTimeString('en-GB');
+    el.textContent = t + '  ' + msg + '\n' + el.textContent;
+  } catch (e) {}
+}
 var _authenticating = false;
 var STOCK_TOKEN_KEY = 'amcraft_stock_token';
 
@@ -716,15 +726,17 @@ function showOperator(op) {
 
 // Entry point: reuse a cached token if still valid, else authenticate.
 function startAuth() {
-  if (_authenticating) return;
+  if (_authenticating) { dbg('startAuth: already authenticating, skip'); return; }
   var cached = getCachedStockToken();
   if (cached && cached.token) {
+    dbg('startAuth: using cached stock-token (valid until midnight)');
     stockToken = cached.token;
     currentOperator = cached.operator;
     showOperator(currentOperator);
     loadHistory();
     return;
   }
+  dbg('startAuth: no cached token -> authenticating');
   _authenticating = true;
   authenticateWithGoogle(0);
 }
@@ -738,33 +750,39 @@ function authenticateWithGoogle(tries) {
   if (!gtok) {
     if (tries > 60) {  // ~30s
       _authenticating = false;
+      dbg('GIVE UP: no Google token after 30s (getToken() stayed null)');
       disp.className = 'operator-display error';
       disp.textContent = 'Sign-in did not complete — please refresh the page';
       return;
     }
+    if (tries === 0 || tries % 6 === 0) dbg('waiting for Google token... (try ' + tries + ')');
     disp.className = 'operator-display pending';
     disp.textContent = 'Finishing sign-in…';
     setTimeout(function() { authenticateWithGoogle(tries + 1); }, 500);
     return;
   }
 
+  dbg('got Google token (len ' + gtok.length + ') -> calling authenticate');
   disp.className = 'operator-display pending';
   disp.textContent = 'Verifying operator…';
 
   jsonp({ action: 'authenticate', id_token: gtok }).then(function(res) {
     _authenticating = false;
     if (res && res.success && res.token && res.operator) {
+      dbg('authenticate OK: ' + res.operator.name + ' (' + res.operator.code + ')');
       stockToken = res.token;
       currentOperator = res.operator;
       setCachedStockToken(res.token, res.operator);
       showOperator(currentOperator);
       loadHistory();
     } else {
+      dbg('authenticate returned FAIL: ' + ((res && res.error) || 'no error text'));
       disp.className = 'operator-display error';
       disp.textContent = (res && res.error) || 'Could not verify operator';
     }
   }).catch(function(err) {
     _authenticating = false;
+    dbg('authenticate CALL FAILED: ' + err.message);
     disp.className = 'operator-display error';
     disp.textContent = 'Could not verify: ' + err.message;
   });
@@ -772,11 +790,13 @@ function authenticateWithGoogle(tries) {
 
 // Re-authenticate after a fresh sign-in (e.g. Sign out -> Sign in).
 window.addEventListener('amcraft-auth-success', function() {
-  if (stockToken && getCachedStockToken()) return;
+  dbg('event: amcraft-auth-success (fresh Google sign-in)');
+  if (stockToken && getCachedStockToken()) { dbg('  already have valid stock-token, skip'); return; }
   startAuth();
 });
 // Clear our token on sign out.
 window.addEventListener('amcraft-auth-signout', function() {
+  dbg('event: amcraft-auth-signout -> cleared stock-token');
   clearCachedStockToken();
   stockToken = null;
   currentOperator = null;

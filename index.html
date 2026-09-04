@@ -613,11 +613,8 @@ var jsonpCounter = 0;
 // =====================================================
 function jsonp(params, _retried) {
   return new Promise(function(resolve, reject) {
-    // Attach the auth day-token (from auth.js) so the backend authorizes writes.
-    if (window.amcraftAuth && window.amcraftAuth.getDayToken) {
-      var _dt = window.amcraftAuth.getDayToken();
-      if (_dt) params.auth_token = _dt;
-    }
+    // Attach our own stock-app token so the backend authorizes writes.
+    if (stockToken) params.auth_token = stockToken;
 
     // State-changing actions must never auto-retry (avoids duplicate movements).
     var canRetry = !_retried &&
@@ -678,53 +675,112 @@ document.addEventListener('DOMContentLoaded', function() {
     addItem('move');
     addItem('writeoff');
     document.getElementById('initOverlay').classList.add('hidden');
-    loadOperator();
+    startAuth();
   }).catch(function(err) {
     document.querySelector('.init-loader p').textContent = 'Failed to connect: ' + err.message;
   });
 });
 
 // =====================================================
-// OPERATOR (resolved from the signed-in identity, read-only)
+// OPERATOR & AUTH — fully self-contained.
+// This app verifies identity and issues its own day-token against ITS OWN
+// backend (the one the phone reaches), so it never depends on any other
+// backend. auth.js is used only to sign the user in with Google.
 // =====================================================
 var currentOperator = null;
+var stockToken = null;
+var _authenticating = false;
+var STOCK_TOKEN_KEY = 'amcraft_stock_token';
 
-// Wait until auth.js has minted the day-token, then resolve the operator.
-function loadOperator(tries) {
-  tries = tries || 0;
+function nextMidnightTs() { var d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime(); }
+
+function getCachedStockToken() {
+  try {
+    var raw = localStorage.getItem(STOCK_TOKEN_KEY);
+    if (!raw) return null;
+    var o = JSON.parse(raw);
+    if (!o.exp || Date.now() >= o.exp) { localStorage.removeItem(STOCK_TOKEN_KEY); return null; }
+    return o;
+  } catch (e) { return null; }
+}
+function setCachedStockToken(token, operator) {
+  try { localStorage.setItem(STOCK_TOKEN_KEY, JSON.stringify({ token: token, operator: operator, exp: nextMidnightTs() })); } catch (e) {}
+}
+function clearCachedStockToken() { try { localStorage.removeItem(STOCK_TOKEN_KEY); } catch (e) {} }
+
+function showOperator(op) {
   var disp = document.getElementById('operatorDisplay');
-  var dt = (window.amcraftAuth && window.amcraftAuth.getDayToken) ? window.amcraftAuth.getDayToken() : null;
+  disp.className = 'operator-display';
+  disp.textContent = op.name + ' (' + op.code + ')';
+}
 
-  if (!dt) {
+// Entry point: reuse a cached token if still valid, else authenticate.
+function startAuth() {
+  if (_authenticating) return;
+  var cached = getCachedStockToken();
+  if (cached && cached.token) {
+    stockToken = cached.token;
+    currentOperator = cached.operator;
+    showOperator(currentOperator);
+    loadHistory();
+    return;
+  }
+  _authenticating = true;
+  authenticateWithGoogle(0);
+}
+
+// Wait for auth.js to provide the Google token, then exchange it at OUR
+// backend for a stock-token (valid until midnight).
+function authenticateWithGoogle(tries) {
+  var disp = document.getElementById('operatorDisplay');
+  var gtok = (window.amcraftAuth && window.amcraftAuth.getToken) ? window.amcraftAuth.getToken() : null;
+
+  if (!gtok) {
     if (tries > 60) {  // ~30s
+      _authenticating = false;
       disp.className = 'operator-display error';
       disp.textContent = 'Sign-in did not complete — please refresh the page';
       return;
     }
     disp.className = 'operator-display pending';
     disp.textContent = 'Finishing sign-in…';
-    setTimeout(function() { loadOperator(tries + 1); }, 500);
+    setTimeout(function() { authenticateWithGoogle(tries + 1); }, 500);
     return;
   }
 
   disp.className = 'operator-display pending';
-  disp.textContent = 'Loading operator…';
+  disp.textContent = 'Verifying operator…';
 
-  jsonp({ action: 'getOperator' }).then(function(res) {
-    if (res && res.success && res.operator) {
+  jsonp({ action: 'authenticate', id_token: gtok }).then(function(res) {
+    _authenticating = false;
+    if (res && res.success && res.token && res.operator) {
+      stockToken = res.token;
       currentOperator = res.operator;
-      disp.className = 'operator-display';
-      disp.textContent = res.operator.name + ' (' + res.operator.code + ')';
+      setCachedStockToken(res.token, res.operator);
+      showOperator(currentOperator);
       loadHistory();
     } else {
       disp.className = 'operator-display error';
-      disp.textContent = (res && res.error) || 'You are not set up as an operator';
+      disp.textContent = (res && res.error) || 'Could not verify operator';
     }
   }).catch(function(err) {
+    _authenticating = false;
     disp.className = 'operator-display error';
-    disp.textContent = 'Could not load operator: ' + err.message;
+    disp.textContent = 'Could not verify: ' + err.message;
   });
 }
+
+// Re-authenticate after a fresh sign-in (e.g. Sign out -> Sign in).
+window.addEventListener('amcraft-auth-success', function() {
+  if (stockToken && getCachedStockToken()) return;
+  startAuth();
+});
+// Clear our token on sign out.
+window.addEventListener('amcraft-auth-signout', function() {
+  clearCachedStockToken();
+  stockToken = null;
+  currentOperator = null;
+});
 
 function populateLocations() {
   ['move-from','move-to','writeoff-from'].forEach(function(id) {

@@ -450,6 +450,20 @@
 
     /* ---- Monospace helpers ---- */
     .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ---- Read-only operator display ---- */
+    .operator-display {
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      background: var(--surface-alt);
+      color: var(--navy);
+      font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .operator-display.pending { color: var(--text-muted); font-weight: 500; }
+    .operator-display.error   { color: var(--error-text); background: var(--error-bg); border-color: transparent; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -474,13 +488,11 @@
 
 <div class="container">
 
-  <!-- Operator -->
+  <!-- Operator (read-only: you are whoever is signed in) -->
   <div class="card">
     <div class="form-group" style="margin:0">
       <label>Operator</label>
-      <select id="operatorSelect" onchange="onOperatorChange()">
-        <option value="">Loading operators…</option>
-      </select>
+      <div id="operatorDisplay" class="operator-display">Loading operator…</div>
     </div>
   </div>
 
@@ -659,31 +671,58 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('topbarDate').textContent =
     d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  // Load data
-  Promise.all([
-    jsonp({ action: 'getEmployees' }),
-    jsonp({ action: 'getLocations' })
-  ]).then(function(res) {
-    employees = res[0] || [];
-    locations = res[1] || [];
-    populateEmployees();
+  // Load locations, then resolve the signed-in operator from the token.
+  jsonp({ action: 'getLocations' }).then(function(locs) {
+    locations = locs || [];
     populateLocations();
     addItem('move');
     addItem('writeoff');
     document.getElementById('initOverlay').classList.add('hidden');
+    loadOperator();
   }).catch(function(err) {
     document.querySelector('.init-loader p').textContent = 'Failed to connect: ' + err.message;
   });
 });
 
-function populateEmployees() {
-  var sel = document.getElementById('operatorSelect');
-  sel.innerHTML = '<option value="">— Select operator —</option>';
-  employees.forEach(function(e) {
-    var o = document.createElement('option');
-    o.value = e.code;
-    o.textContent = e.name + '  (' + e.code + ')';
-    sel.appendChild(o);
+// =====================================================
+// OPERATOR (resolved from the signed-in identity, read-only)
+// =====================================================
+var currentOperator = null;
+
+// Wait until auth.js has minted the day-token, then resolve the operator.
+function loadOperator(tries) {
+  tries = tries || 0;
+  var disp = document.getElementById('operatorDisplay');
+  var dt = (window.amcraftAuth && window.amcraftAuth.getDayToken) ? window.amcraftAuth.getDayToken() : null;
+
+  if (!dt) {
+    if (tries > 60) {  // ~30s
+      disp.className = 'operator-display error';
+      disp.textContent = 'Sign-in did not complete — please refresh the page';
+      return;
+    }
+    disp.className = 'operator-display pending';
+    disp.textContent = 'Finishing sign-in…';
+    setTimeout(function() { loadOperator(tries + 1); }, 500);
+    return;
+  }
+
+  disp.className = 'operator-display pending';
+  disp.textContent = 'Loading operator…';
+
+  jsonp({ action: 'getOperator' }).then(function(res) {
+    if (res && res.success && res.operator) {
+      currentOperator = res.operator;
+      disp.className = 'operator-display';
+      disp.textContent = res.operator.name + ' (' + res.operator.code + ')';
+      loadHistory();
+    } else {
+      disp.className = 'operator-display error';
+      disp.textContent = (res && res.error) || 'You are not set up as an operator';
+    }
+  }).catch(function(err) {
+    disp.className = 'operator-display error';
+    disp.textContent = 'Could not load operator: ' + err.message;
   });
 }
 
@@ -709,13 +748,6 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('section-' + tab).classList.add('active');
   if (tab === 'history') loadHistory();
-}
-
-function onOperatorChange() {
-  // auto-load history if on history tab
-  if (document.getElementById('section-history').classList.contains('active')) {
-    loadHistory();
-  }
 }
 
 // =====================================================
@@ -854,17 +886,14 @@ function getItems(section) {
 // CONFIRM & SAVE — MOVE
 // =====================================================
 function confirmMove() {
-  var op = document.getElementById('operatorSelect');
-  var operatorCode = op.value;
-  var operatorName = op.selectedOptions[0] ? op.selectedOptions[0].text : '';
+  var operatorName = currentOperator ? (currentOperator.name + ' (' + currentOperator.code + ')') : '';
   var fromLoc = document.getElementById('move-from').value;
   var toLoc = document.getElementById('move-to').value;
   var wo = document.getElementById('move-wo').value.trim().toUpperCase();
   var items = getItems('move');
 
-  if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
-    return showToast('error', 'Finishing sign-in — please try again in a few seconds');
-  if (!operatorCode) return showToast('error', 'Select an operator');
+  if (!currentOperator)
+    return showToast('error', 'Operator not loaded yet — please wait a moment or refresh');
   if (!fromLoc || !toLoc) return showToast('error', 'Select FROM and TO locations');
   if (fromLoc === toLoc) return showToast('error', 'FROM and TO cannot be the same');
   if (items.length === 0) return showToast('error', 'Add at least one item with batch info loaded');
@@ -877,7 +906,6 @@ function confirmMove() {
 
     jsonp({
       action: 'createMove',
-      operatorCode: operatorCode,
       fromLocation: fromLoc,
       toLocation: toLoc,
       workOrder: wo,
@@ -909,17 +937,14 @@ function confirmMove() {
 // CONFIRM & SAVE — WRITEOFF
 // =====================================================
 function confirmWriteoff() {
-  var op = document.getElementById('operatorSelect');
-  var operatorCode = op.value;
-  var operatorName = op.selectedOptions[0] ? op.selectedOptions[0].text : '';
+  var operatorName = currentOperator ? (currentOperator.name + ' (' + currentOperator.code + ')') : '';
   var fromLoc = document.getElementById('writeoff-from').value;
   var wo = document.getElementById('writeoff-wo').value.trim().toUpperCase();
   var reason = document.getElementById('writeoff-reason').value.trim();
   var items = getItems('writeoff');
 
-  if (window.amcraftAuth && window.amcraftAuth.getDayToken && !window.amcraftAuth.getDayToken())
-    return showToast('error', 'Finishing sign-in — please try again in a few seconds');
-  if (!operatorCode) return showToast('error', 'Select an operator');
+  if (!currentOperator)
+    return showToast('error', 'Operator not loaded yet — please wait a moment or refresh');
   if (!fromLoc) return showToast('error', 'Select FROM location');
   if (items.length === 0) return showToast('error', 'Add at least one item with batch info loaded');
 
@@ -931,7 +956,6 @@ function confirmWriteoff() {
 
     jsonp({
       action: 'createWriteoff',
-      operatorCode: operatorCode,
       fromLocation: fromLoc,
       workOrder: wo,
       reason: reason,
@@ -1027,17 +1051,16 @@ function checkStock() {
 // HISTORY
 // =====================================================
 function loadHistory() {
-  var operatorCode = document.getElementById('operatorSelect').value;
   var container = document.getElementById('history-container');
 
-  if (!operatorCode) {
-    container.innerHTML = '<div class="history-empty">Select an operator to view history</div>';
+  if (!currentOperator) {
+    container.innerHTML = '<div class="history-empty">Loading operator…</div>';
     return;
   }
 
   container.innerHTML = '<div class="item-info loading">Loading history…</div>';
 
-  jsonp({ action: 'getHistory', operatorCode: operatorCode, limit: '12' }).then(function(movements) {
+  jsonp({ action: 'getHistory', operatorCode: currentOperator.code, limit: '12' }).then(function(movements) {
     if (!movements || movements.length === 0) {
       container.innerHTML = '<div class="history-empty">No movements found</div>';
       return;

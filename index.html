@@ -669,7 +669,15 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('topbarDate').textContent =
     d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  // Load locations, then resolve the signed-in operator from the token.
+  // Load locations (with retries), then resolve the signed-in operator.
+  loadLocationsWithRetry(0);
+});
+
+// The very first call on page load. On a cold/blipped backend a single
+// failure used to kill the whole page; now it retries a few times with
+// backoff before showing the error, so a refresh blip is just a short pause.
+function loadLocationsWithRetry(attempt) {
+  var msgEl = document.querySelector('.init-loader p');
   jsonp({ action: 'getLocations' }).then(function(locs) {
     locations = locs || [];
     populateLocations();
@@ -678,9 +686,15 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('initOverlay').classList.add('hidden');
     startAuth();
   }).catch(function(err) {
-    document.querySelector('.init-loader p').textContent = 'Failed to connect: ' + err.message;
+    var delays = [1000, 2000, 4000, 8000, 12000]; // ~27s total across retries
+    if (attempt < delays.length) {
+      if (msgEl) msgEl.textContent = 'Connecting… (' + (attempt + 2) + ')';
+      setTimeout(function() { loadLocationsWithRetry(attempt + 1); }, delays[attempt]);
+    } else {
+      if (msgEl) msgEl.textContent = 'Failed to connect: ' + err.message + ' — tap refresh to retry';
+    }
   });
-});
+}
 
 // =====================================================
 // OPERATOR & AUTH — fully self-contained.

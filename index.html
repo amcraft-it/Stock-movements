@@ -762,30 +762,54 @@ function authenticateWithGoogle(tries) {
     return;
   }
 
-  dbg('got Google token (len ' + gtok.length + ') -> calling authenticate');
+  dbg('got Google token (len ' + gtok.length + ') -> POST authenticate');
   disp.className = 'operator-display pending';
   disp.textContent = 'Verifying operator…';
 
-  jsonp({ action: 'authenticate', id_token: gtok }).then(function(res) {
-    _authenticating = false;
-    if (res && res.success && res.token && res.operator) {
-      dbg('authenticate OK: ' + res.operator.name + ' (' + res.operator.code + ')');
-      stockToken = res.token;
-      currentOperator = res.operator;
-      setCachedStockToken(res.token, res.operator);
-      showOperator(currentOperator);
-      loadHistory();
-    } else {
-      dbg('authenticate returned FAIL: ' + ((res && res.error) || 'no error text'));
-      disp.className = 'operator-display error';
-      disp.textContent = (res && res.error) || 'Could not verify operator';
-    }
+  // Primary: POST (token in body, not URL). Fallback: JSONP GET.
+  authenticatePost(gtok).then(function(res) {
+    handleAuthResult(res, disp);
   }).catch(function(err) {
-    _authenticating = false;
-    dbg('authenticate CALL FAILED: ' + err.message);
-    disp.className = 'operator-display error';
-    disp.textContent = 'Could not verify: ' + err.message;
+    dbg('POST failed (' + err.message + ') -> JSONP fallback');
+    jsonp({ action: 'authenticate', id_token: gtok }).then(function(res) {
+      handleAuthResult(res, disp);
+    }).catch(function(err2) {
+      _authenticating = false;
+      dbg('authenticate FAILED (both POST + JSONP): ' + err2.message);
+      disp.className = 'operator-display error';
+      disp.textContent = 'Could not verify: ' + err2.message;
+    });
   });
+}
+
+// POST the Google token in the request body (text/plain = no CORS preflight).
+function authenticatePost(idToken) {
+  var ctrl = new AbortController();
+  var to = setTimeout(function() { ctrl.abort(); }, 30000);
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'authenticate', id_token: idToken }),
+    redirect: 'follow',
+    signal: ctrl.signal
+  }).then(function(r) { clearTimeout(to); return r.json(); })
+    .catch(function(err) { clearTimeout(to); throw err; });
+}
+
+function handleAuthResult(res, disp) {
+  _authenticating = false;
+  if (res && res.success && res.token && res.operator) {
+    dbg('authenticate OK: ' + res.operator.name + ' (' + res.operator.code + ')');
+    stockToken = res.token;
+    currentOperator = res.operator;
+    setCachedStockToken(res.token, res.operator);
+    showOperator(currentOperator);
+    loadHistory();
+  } else {
+    dbg('authenticate returned FAIL: ' + ((res && res.error) || 'no error text'));
+    disp.className = 'operator-display error';
+    disp.textContent = (res && res.error) || 'Could not verify operator';
+  }
 }
 
 // Re-authenticate after a fresh sign-in (e.g. Sign out -> Sign in).
